@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <object class="GtkFileChooserDialog" id="filebrowser">
+    <property name="action">select-folder</property>
+    <child>
+      <object class="GtkBox">
+        <property name="visible">0</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkApplicationWindow" id="window">
+    <child>
+      <object class="GtkBox">
+        <property name="baseline-position">bottom</property>
+        <child>
+          <object class="GtkBox" id="file_browsing_box">
+            <property name="hexpand">1</property>
+            <property name="margin-start">21</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkButton" id="button_browsing">
+                <property name="label" translatable="1">Browse</property>
+                <property name="focusable">1</property>
+                <property name="receives-default">1</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSearchEntry" id="text_filename">
+                <property name="focusable">1</property>
+                <property name="margin-top">20</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkTreeView" id="treeview_file">
+                <property name="vexpand">1</property>
+                <property name="focusable">1</property>
+                <property name="margin-start">5</property>
+                <property name="margin-end">5</property>
+                <property name="margin-top">20</property>
+                <property name="tooltip-column">0</property>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection"/>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="hexpand">1</property>
+            <property name="margin-start">30</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkBox">
+                <property name="valign">center</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="hexpand">1</property>
+                    <property name="margin-start">10</property>
+                    <property name="margin-end">10</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label" translatable="1">File Information</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="vexpand">1</property>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="orientation">vertical</property>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="valign">center</property>
+                                <property name="margin-bottom">36</property>
+                                <property name="label" translatable="1">File name</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="valign">center</property>
+                                <property name="margin-bottom">36</property>
+                                <property name="label" translatable="1">ID</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="valign">center</property>
+                                <property name="label" translatable="1">Name</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="halign">center</property>
+                            <property name="hexpand">1</property>
+                            <property name="orientation">vertical</property>
+                            <child>
+                              <object class="GtkEntry" id="text_filenam">
+                                <property name="focusable">1</property>
+                                <property name="valign">center</property>
+                                <property name="margin-bottom">20</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="text_id">
+                                <property name="valign">center</property>
+                                <property name="focusable">1</property>
+                                <property name="margin-bottom">20</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="text_name">
+                                <property name="valign">center</property>
+                                <property name="focusable">1</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkBox">
+                    <property name="hexpand">1</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="label" translatable="1">Parameters</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="halign">center</property>
+                            <property name="margin-start">10</property>
+                            <property name="margin-end">10</property>
+                            <property name="label" translatable="1">Day</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="text_day">
+                            <property name="hexpand">1</property>
+                            <property name="focusable">1</property>
+                            <property name="margin-top">3</property>
+                            <property name="margin-bottom">3</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <child>
+                          <object class="GtkCheckButton" id="check_redvalue">
+                            <property name="hexpand">1</property>
+                            <property name="label" translatable="1">Red Value</property>
+                            <property name="focusable">1</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="hexpand">1</property>
+                            <property name="margin-start">1</property>
+                            <property name="margin-end">5</property>
+                            <property name="label" translatable="1">Time Start</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="text_timestart">
+                            <property name="halign">center</property>
+                            <property name="hexpand">1</property>
+                            <property name="focusable">1</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="margin-start">5</property>
+                            <property name="margin-end">5</property>
+                            <property name="hexpand">1</property>
+                            <property name="label" translatable="1">SpO2</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="text_spred">
+                            <property name="focusable">1</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <child>
+                          <object class="GtkCheckButton" id="check_irvalue">
+                            <property name="label" translatable="1">IR Value</property>
+                            <property name="focusable">1</property>
+                            <property name="margin-end">8</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="margin-end">13</property>
+                            <property name="hexpand">0</property>
+                            <property name="label" translatable="1">Time End</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="text_timeend">
+                            <property name="focusable">1</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="margin-start">5</property>
+                            <property name="margin-end">5</property>
+                            <property name="label" translatable="1">SpO2</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="text_spir">
+                            <property name="focusable">1</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkDrawingArea">
+                <property name="vexpand">1</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <child>
+                  <object class="GtkButton" id="button_connect">
+                    <property name="label" translatable="1">Connect ...</property>
+                    <property name="focusable">1</property>
+                    <property name="receives-default">1</property>
+                    <property name="margin-end">20</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label_status">
+                    <property name="hexpand">1</property>
+                    <property name="margin-start">3</property>
+                    <property name="margin-end">3</property>
+                    <property name="label" translatable="1">(Unconnected)</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="button_start">
+                    <property name="label" translatable="1">Start</property>
+                    <property name="focusable">1</property>
+                    <property name="receives-default">1</property>
+                    <property name="margin-start">20</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="button_newrecord">
+                    <property name="label" translatable="1">New Record</property>
+                    <property name="focusable">1</property>
+                    <property name="receives-default">1</property>
+                    <property name="margin-start">5</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="button_stop">
+                    <property name="label" translatable="1">Stop</property>
+                    <property name="focusable">1</property>
+                    <property name="receives-default">1</property>
+                    <property name="margin-start">5</property>
+                    <property name="margin-end">10</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
