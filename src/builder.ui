@@ -33,21 +33,42 @@
               </object>
             </child>
             <child>
-              <object class="GtkSearchEntry" id="text_filename">
+              <object class="GtkEntry" id="text_filename">
                 <property name="focusable">1</property>
                 <property name="margin-top">20</property>
               </object>
             </child>
             <child>
               <object class="GtkTreeView" id="treeview_file">
+<!--
                 <property name="vexpand">1</property>
                 <property name="focusable">1</property>
                 <property name="margin-start">5</property>
                 <property name="margin-end">5</property>
                 <property name="margin-top">20</property>
                 <property name="tooltip-column">0</property>
+-->
+<!--
+                <child>
+                  <object class="GtkTreeViewColumn" id="id-column">
+                    <property name="title">ID</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="test-renderer"/>
+                      <attributes>
+                        <attribute name="text">1</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                  <object class="GtkTreeViewColumn" id="name-column">
+                    <property name="title">Name</property>
+                  </object>
+                  <object class="GtkTreeViewColumn" id="filename-column">
+                    <property name="title">File Name</property>
+                  </object>  
+                </child>
+-->
                 <child internal-child="selection">
-                  <object class="GtkTreeSelection"/>
+                  <object class="GtkTreeSelection" id="tree_selection"/>
                 </child>
               </object>
             </child>
