@@ -70,8 +70,8 @@ release: CFLAGS+=-O2
 release: CXXFLAGS+=-O2
 release: all
 
-debug: CFLAGS+=-g
-debug: CXXFLAGS+=-g	
+debug: CFLAGS+=-g -D DEBUG
+debug: CXXFLAGS+=-g -D DEBUG
 debug: all
 
 execute : all
