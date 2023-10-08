@@ -16,6 +16,7 @@ static void activate (  GtkApplication  *app,
 
 
         load_file_browsing(builder, GTK_WINDOW(window));
+        load_bluetooth(builder, GTK_WINDOW(window));
 /*
   GtkWidget *dialog;
   GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;

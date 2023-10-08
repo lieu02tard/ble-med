@@ -18,6 +18,8 @@ enum
         FILE_NAME_COLUMN,
         N_COLUMNS = 3
 };
+
+
 void _file_chooser_response (GtkDialog       *self, 
                              gint            response_id, 
                              gpointer        data)

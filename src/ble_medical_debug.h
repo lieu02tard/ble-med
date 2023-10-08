@@ -15,7 +15,7 @@
 #define c_magenta       "\033[1;35m"
 #define c_cyan          "\033[1;36m"
 #define c_reset         "\033[0m"
-void _debug_print(const char* title) {
+static inline void _debug_print(const char* title) {
         fprintf(stderr, c_red);
         fprintf(stderr, "[DEBUG]: ");
         fprintf(stderr, c_reset);
