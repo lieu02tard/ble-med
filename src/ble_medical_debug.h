@@ -2,9 +2,7 @@
 #define BLE_MEDICAL_DEBUG_H
 
 #ifdef DEBUG
-#include <gtk/gtk.h>
-#include <glib/gstdio.h>
-#include <glib/gi18n.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -15,6 +13,7 @@
 #define c_magenta       "\033[1;35m"
 #define c_cyan          "\033[1;36m"
 #define c_reset         "\033[0m"
+
 static inline void _debug_print(const char* title) {
         fprintf(stderr, c_red);
         fprintf(stderr, "[DEBUG]: ");

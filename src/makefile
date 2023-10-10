@@ -14,7 +14,7 @@ CCFLAGS	:=-c
 # C preprocessor flag
 CPPFLAGS:=
 # Linker flag
-LDFLAGS	:=-lgtk-4 -lpangocairo-1.0 -lpango-1.0 -lharfbuzz -lgdk_pixbuf-2.0 -lcairo-gobject -lcairo -lgraphene-1.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0
+LDFLAGS	:=-lgtk-4 -lpangocairo-1.0 -lpango-1.0 -lharfbuzz -lgdk_pixbuf-2.0 -lcairo-gobject -lcairo -lgraphene-1.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0 -lsimpleble-c
 #------------------------------------------
 
 #----------Directories-------------------
@@ -70,6 +70,7 @@ release: CFLAGS+=-O2
 release: CXXFLAGS+=-O2
 release: all
 
+debug: clean
 debug: CFLAGS+=-g -D DEBUG
 debug: CXXFLAGS+=-g -D DEBUG
 debug: all

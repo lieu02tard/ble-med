@@ -320,6 +320,7 @@
                 </child>
                 <child>
                   <object class="GtkTreeView" id="adapters_tree">
+                    <property name="activate-on-single-click">false</property>
                     <property name="focusable">1</property>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection"/>
@@ -344,6 +345,7 @@
                 </child>
                 <child>
                   <object class="GtkTreeView" id="peripherals_tree">
+                    <property name="activate-on-single-click">false</property>
                     <property name="focusable">1</property>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection"/>
