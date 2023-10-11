@@ -241,8 +241,10 @@
               </object>
             </child>
             <child>
-              <object class="GtkDrawingArea">
+              <object class="GtkBox" id="plot_box">
                 <property name="vexpand">1</property>
+                <property name="hexpand">1</property>
+                <property name="orientation">horizontal</property>
               </object>
             </child>
             <child>
@@ -320,7 +322,7 @@
                 </child>
                 <child>
                   <object class="GtkTreeView" id="adapters_tree">
-                    <property name="activate-on-single-click">false</property>
+                    <property name="activate-on-single-click">0</property>
                     <property name="focusable">1</property>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection"/>
@@ -346,6 +348,31 @@
                 <child>
                   <object class="GtkTreeView" id="peripherals_tree">
                     <property name="activate-on-single-click">false</property>
+                    <property name="focusable">1</property>
+                    <child internal-child="selection">
+                      <object class="GtkTreeSelection"/>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="hexpand">1</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="1">Services:</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="services_text">
+                    <property name="focusable">1</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeView" id="services_tree">
+                    <property name="activate-on-single-click">0</property>
                     <property name="focusable">1</property>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection"/>
