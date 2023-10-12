@@ -16,6 +16,7 @@ void _browsing_button_triggered(GtkButton       *self,
                                 gpointer        data)
 {
         gtk_window_present (GTK_WINDOW (data));
+        _debug_print("Dialog presented");
 }
 
 void _file_chooser_response (GtkDialog       *self, 
@@ -54,19 +55,26 @@ void _file_chooser_response (GtkDialog       *self,
                         GFileInfo *info = g_file_enumerator_next_file(fenum, NULL, NULL);
                         if (info)
                         {
-                                _debug_print(g_file_info_get_name(info)); // Each files' name
+                                char *filename = g_file_info_get_name(info);
 
                                 gtk_list_store_append(store, &iter);
-                                gtk_list_store_set(store, &iter, ID_COLUMN, i, NAME_COLUMN, "ABC", FILE_NAME_COLUMN, g_file_info_get_name(info), -1);
+                                gtk_list_store_set(store, &iter, ID_COLUMN, i, NAME_COLUMN, "Default_name", FILE_NAME_COLUMN, filename, -1);
+                                //g_free(filename);
                         }
                         else
                                 break;
+                        g_object_unref(G_OBJECT(info));
 
                 }
+                g_object_unref(G_OBJECT(chooser));
+                g_object_unref(G_OBJECT(file));
+                g_object_unref(G_OBJECT(inf));
+                g_object_unref(G_OBJECT(fenum));
 
         }
 
         gtk_window_destroy (GTK_WINDOW(self));
+
 }
 void _tree_selection_changed (GtkTreeSelection *selection, gpointer data)
 {
@@ -79,6 +87,7 @@ void _tree_selection_changed (GtkTreeSelection *selection, gpointer data)
                 gtk_tree_model_get(model, &iter, FILE_NAME_COLUMN, &filename, -1);
                 GtkEntryBuffer *buffer = gtk_entry_buffer_new(_(filename), -1);
                 gtk_entry_set_buffer(GTK_ENTRY(data), buffer);
+                g_object_unref(buffer);
                 g_free(filename);
         }
 }
@@ -88,13 +97,12 @@ void load_file_browsing(GtkBuilder      *builder,
 {
         
         GtkWidget               *dialog;
-        GtkFileChooserAction    action = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
-
+        GtkFileChooserAction    action  = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
         GObject                 *button = gtk_builder_get_object (builder, 
                                                                   "button_browsing");
-        GObject                 *list = gtk_builder_get_object(builder, 
+        GObject                 *list   = gtk_builder_get_object(builder, 
                                                                "treeview_file");
-        GObject                 *text = gtk_builder_get_object(builder, 
+        GObject                 *text   = gtk_builder_get_object(builder, 
                                                                "text_filename");
         GtkTreeSelection        *select;
 

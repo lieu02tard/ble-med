@@ -1,5 +1,6 @@
 #include "ble_medical_bluetooth.h"
 #include "ble_medical_debug.h"
+#include "credentials.h"
 
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
@@ -38,7 +39,7 @@ void print_formated(uint8_t *data)
         uint32_t percentage     = *((uint32_t*)(data + 82));
         uint64_t time           = *((uint64_t*)(data + 84));
         uint32_t milis          = *((uint32_t*)(data + 88));
-        g_print("Temp 1: %hu\nTemp 2: %hu\nRed value: %u\nIR Value: %u\nPercentage: %u\nTime: %u\nMilis: %u\n", 
+        g_print("Temp 1: %hu\nTemp 2: %hu\nRed value: %u\nIR Value: %u\nPercentage: %u\nTime: %lu\nMilis: %u\n", 
         t1, t2, rvalue[0], irvalue[0], percentage, time, milis);
 }
 
@@ -56,6 +57,47 @@ typedef struct _twin_list_1 {
 void _load_peripherals_info(gpointer data)
 {
 
+}
+
+void _close_button_clicked(GtkButton *self, gpointer data)
+{
+        // Free unused peripheral identifier, clean up the dialog and close it
+        GObject *bled = (GObject*) data;
+        simpleble_peripheral_t *plist = (simpleble_peripheral_t*) g_object_get_data(bled, "peripherals_list");
+
+        
+        simpleble_peripheral_t *main_list = (simpleble_peripheral_t*) g_malloc(sizeof(simpleble_peripheral_t));
+        if (main_list == NULL)
+        {
+                _debug_print("List allocation failed");
+                exit(1);
+        }
+
+        gpointer _pi = g_object_get_data(bled, "peripheral_index");
+        size_t peripheral_index = GPOINTER_TO_SIZE(_pi);
+        gpointer _pl = g_object_get_data(bled, "peripherals_count");
+        size_t peripheral_len   = GPOINTER_TO_SIZE(_pl);
+        main_list[0] = plist[peripheral_index];
+
+        for (size_t i = 0; i < peripheral_len; i++)
+        {
+                if (i != peripheral_index)
+                        simpleble_peripheral_release_handle(plist[i]);
+        }
+
+        g_free(plist);
+        g_object_set_data(bled, "peripherals_list", NULL);
+        g_object_set_data(bled, "main_peripheral", main_list);
+
+        char *_identifier = simpleble_peripheral_identifier(main_list[0]);
+        GObject *_label = g_object_get_data(bled, "bluetooth_status");
+        char _label_text[BUFSIZ];
+        snprintf(_label_text, BUFSIZ, "Connected to  %s", _identifier);
+        gtk_label_set_text(GTK_LABEL(_label), _label_text);
+
+        simpleble_free(_identifier);
+        gtk_window_close(GTK_WINDOW(bled));
+        g_object_unref(G_OBJECT(bled));
 }
 
 void _adapter_on_scan_found(    simpleble_adapter_t adapter, 
@@ -82,6 +124,7 @@ void _adapter_on_scan_found(    simpleble_adapter_t adapter,
         
         simpleble_free(peripheral_identifier);
         simpleble_free(peripheral_address);
+        simpleble_free(adapter_identifier);
 }
 
 void _adapter_on_scan_stop(simpleble_adapter_t adapter, void *data)
@@ -131,9 +174,72 @@ void _load_peripherals(gpointer data)
                 ADDRESS_S_COL, peripheral_address,
                 IDENTIFIER_S_COL, peripheral_identifier,
                 CONNECTION_S_COL, "Unconnected", -1);
+
+                simpleble_free(peripheral_identifier);
+                simpleble_free(peripheral_address);
         }
 
 }
+
+gint _verify_peripherals(simpleble_peripheral_t peri)
+{
+        char *_tmp_address = simpleble_peripheral_address(peri);
+        char *_tmp_identifier = simpleble_peripheral_identifier(peri);
+
+        // Attempt connecting
+        simpleble_err_t err_code = simpleble_peripheral_connect(peri);
+        if (err_code != SIMPLEBLE_SUCCESS)
+        {
+                _debug_print("Peripheral connection failed");
+                exit(1);
+        }
+        else
+        {
+                _debug_print("Peripheral connection success");
+        }
+
+        size_t services_count = simpleble_peripheral_services_count(peri);
+        g_print("%zu services\n", services_count);
+        // Check for specialized BLE services
+
+        for (size_t i = 0; i < services_count; i++)
+        {
+                simpleble_service_t service;
+                err_code = simpleble_peripheral_services_get(peri, i, &service);
+                if (err_code != SIMPLEBLE_SUCCESS)
+                {
+                        _debug_print("Failed to get service");
+                        exit(1);
+                }
+
+                if (g_strcmp0(service.uuid.value, DEFAULT_SERVICE_UUID) == 0)
+                {
+                        for (size_t j = 0; j < service.characteristic_count; j++)
+                        {
+                                if (g_strcmp0(service.characteristics[j].uuid.value, DEFAULT_CHARACTERISTIC_UUID) == 0)
+                                {
+                                        // Found the correct ones
+                                        uint8_t *data = NULL;
+                                        size_t data_length;
+                                        _debug_print("Start receiving . . . ");
+                                        err_code = simpleble_peripheral_read(peri, service.uuid, service.characteristics[j].uuid, &data, &data_length);
+                                        if (data_length == 90)
+                                        {
+                                                _debug_print("Connection verified");
+                                                simpleble_free(data);
+                                                return true;
+                                        }
+                                        simpleble_free(data);
+                                }
+                        }
+                }
+        }
+
+        return false;
+}
+
+
+
 void _peripherals_tree_selected(GtkTreeView     *self,
                                 GtkTreePath     *path,
                                 GtkTreeViewColumn       *column,
@@ -155,88 +261,23 @@ void _peripherals_tree_selected(GtkTreeView     *self,
                 for (size_t i = 0; i < peripheral_count; i++)
                 {
                         simpleble_peripheral_t _tmp_peripheral = peripherals[i];
-                        char *_tmp_address = simpleble_peripheral_address(_tmp_peripheral);
-                        char *_tmp_identifier = simpleble_peripheral_identifier(_tmp_peripheral);
-
-                        if (g_strcmp0(_tmp_address, address) == 0)
+                        if (_verify_peripherals(_tmp_peripheral))
                         {
-                                g_object_set_data(bled, "peripheral", GINT_TO_POINTER(i));
-//                                gtk_list_store_set(GTK_LIST_STORE(model), &iter,
-//                                ADDRESS_S_COL, _tmp_address,
-//                                IDENTIFIER_S_COL, _tmp_identifier,
-//                                CONNECTION_S_COL,
-//                                "Connected", -1);
+                                gtk_list_store_set(GTK_LIST_STORE(model), &iter,
+                                                CONNECTION_S_COL,
+                                                "Connected", -1);
+                                g_object_set_data(bled, "verified_connection", GINT_TO_POINTER(true));
+                                g_object_set_data(bled, "peripheral_index", GSIZE_TO_POINTER(i));
+                                g_object_set_data(bled, "service_connected", GINT_TO_POINTER(1));
+                                g_object_set_data(bled, "characteristic_connected", GINT_TO_POINTER(1));
 
-                                // Attempt connecting
-                                err_code = simpleble_peripheral_connect(_tmp_peripheral);
-                                if (err_code != SIMPLEBLE_SUCCESS)
-                                {
-                                        _debug_print("Peripheral connection failed");
-                                        exit(1);
-                                }
-                                else
-                                {
-                                        _debug_print("Peripheral connection success");
-                                }
-
-                                size_t services_count = simpleble_peripheral_services_count(_tmp_peripheral);
-                                g_print("%zu services\n", services_count);
-                                // Check for specialized BLE services
-
-                                if (services_count == 1)
-                                {
-                                        simpleble_service_t service;
-                                        err_code = simpleble_peripheral_services_get(_tmp_peripheral, 0, &service);
-
-                                        if (err_code != SIMPLEBLE_SUCCESS)
-                                        {
-                                                _debug_print("Failed to get service");
-                                                exit(1);
-                                        }
-                                        
-                                        if (service.characteristic_count == 1)
-                                        {
-                                                _debug_print("Characteristics: ");
-                                        }
-                                }
-                                else 
-                                {
-                                        simpleble_service_t service;
-                                        err_code = simpleble_peripheral_services_get(_tmp_peripheral, 1, &service);
-
-                                        if (err_code != SIMPLEBLE_SUCCESS)
-                                        {
-                                                _debug_print("Failed to get service");
-                                                exit(1);
-                                        }
-                                        
-                                        if (service.characteristic_count == 0)
-                                        {
-                                                _debug_print("No characteristics found");
-                                                exit(1);
-                                        }
-                                        g_print("%zu characteristics\n", service.characteristic_count);
-                                        g_print("Characteristics:\n%x \n", service.characteristics[0].uuid.value
-                                        );
-                                        uint8_t *data = NULL;
-                                        size_t data_length;
-                                        _debug_print("Start receiving . . .");
-                                        err_code = simpleble_peripheral_read(_tmp_peripheral, service.uuid, service.characteristics[0].uuid, &data, &data_length);
-//                                        print_hex(data, _debug_print);
-                                        g_print("%zu\n", data_length);
-                                        if (data_length == 90)
-                                        {
-                                                print_formated(data);
-                                        }
-                                        simpleble_free(data);
-                                        }
-
-                                }
-                                simpleble_peripheral_disconnect(_tmp_peripheral);
+                                return;
                         }
-
-
+                        simpleble_peripheral_disconnect(_tmp_peripheral);
                 }
+
+
+        }
 
                 // Scan the received list of peripherals for one that have the same address as the list
 
@@ -264,9 +305,12 @@ void _adapters_tree_selected(   GtkTreeView       *self,
                         char *_tmp_address      = simpleble_adapter_address(_tmp_adapter);
                         char *_tmp_identifier   = simpleble_adapter_identifier(_tmp_adapter);
 
+                        int isChoosen = false;
                         if (g_strcmp0(_tmp_address, address) == 0)
                         {
+                                isChoosen = true;
                                 g_object_set_data(G_OBJECT(self), "adapter", GINT_TO_POINTER(i));
+                                g_object_set_data(G_OBJECT(self), "adapter_address", _tmp_address);
                                 gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
                                 ADDRESS_COL, _tmp_address, 
                                 IDENTIFIER_COL, _tmp_identifier, 
@@ -275,8 +319,8 @@ void _adapters_tree_selected(   GtkTreeView       *self,
                                 // Triggering peripherals scanning
                                 GThread *thread_1= g_thread_new("bluetooth_scanning", _load_peripherals, self);
                         }
-
-                        simpleble_free(_tmp_address);
+                        if (isChoosen == false)
+                                simpleble_free(_tmp_address);
                         simpleble_free(_tmp_identifier);
                         simpleble_adapter_release_handle(_tmp_adapter);
                         
@@ -297,6 +341,7 @@ void _peripherals_tree_changed( GtkTreeSelection        *selection,
                 GtkEntryBuffer *buffer = gtk_entry_buffer_new(_(address), -1);
                 gtk_entry_set_buffer(GTK_ENTRY(data), buffer);
                 g_free(address);
+                g_object_unref(G_OBJECT(buffer));
         }
 }
 void _adapters_tree_changed(    GtkTreeSelection *selection, 
@@ -312,7 +357,7 @@ void _adapters_tree_changed(    GtkTreeSelection *selection,
                 GtkEntryBuffer *buffer = gtk_entry_buffer_new(_(address), -1);
                 gtk_entry_set_buffer(GTK_ENTRY(data), buffer);
                 g_free(address);
-                g_free(buffer);
+                g_object_unref(G_OBJECT(buffer));
         }
 }
 void _load_adapters_on_exit()
@@ -333,11 +378,13 @@ void _load_adapters(gpointer data)
         if (adapter_count == 0)
         {
                 // [TODO]: Reload after 5 seconds. If not, print a message
+                _debug_print("No Bluetooth adapter found");
+                exit(1);
         }
         else
         {
                 GObject         *store_obj = G_OBJECT(store);
-                gpointer        __tmp_ptr = GINT_TO_POINTER(adapter_count);
+                gpointer        __tmp_ptr = GSIZE_TO_POINTER(adapter_count);
 
                 g_object_set_data(store_obj, "adapter_count", __tmp_ptr);
                 for (size_t i = 0; i < adapter_count; i++)
@@ -350,7 +397,11 @@ void _load_adapters(gpointer data)
                         gtk_list_store_set(store, &iter, 
                         ADDRESS_COL, address,
                         IDENTIFIER_COL, identifier,
-                        CONNECTION_COL, "A", -1);      
+                        CONNECTION_COL, "A", -1);
+
+                        simpleble_free(identifier);
+                        simpleble_free(address);
+                        simpleble_adapter_release_handle(_tmp_adapter);
                 }
         }
 }
@@ -365,24 +416,17 @@ void _connect_button_clicked(   GtkButton       *self,
         GObject *adapters_text      = (GObject*) g_object_get_data(data, "adapters_text");
         GObject *peripherals_text   = (GObject*) g_object_get_data(data, "peripherals_text");
         GObject *peripherals_tree   = (GObject*) g_object_get_data(data, "peripherals_tree");
-        GObject *services_text      = (GObject*) g_object_get_data(data, "services_text");
-        GObject *services_tree      = (GObject*) g_object_get_data(data, "services_tree");
         GObject *close_button       = (GObject*) g_object_get_data(data, "close_button");
         GObject *connect_button     = (GObject*) g_object_get_data(data, "connect_button");
 
-        gtk_widget_set_sensitive(GTK_WIDGET(services_tree), FALSE);
-        gtk_tree_view_set_activate_on_single_click(GTK_TREE_VIEW(adapters_tree), false);
-        
         // Load adapters tree view
         GtkListStore *adapters_store    = gtk_list_store_new(N_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
         GtkListStore *peripherals_store = gtk_list_store_new(NP_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
-        GtkListStore *services_store    = gtk_list_store_new(N_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
         g_object_set_data(data, "peripherals_store", peripherals_store);
         gtk_tree_view_set_model(GTK_TREE_VIEW(adapters_tree), GTK_TREE_MODEL(adapters_store));
         gtk_tree_view_set_model(GTK_TREE_VIEW(peripherals_tree), GTK_TREE_MODEL(peripherals_store));
 
-        GtkTreeIter             adapters_iter, peripherals_iter;
         GtkCellRenderer         *renderer;
         GtkTreeViewColumn       *column_1, *column_2, *column_3, *column_4, *column_5, *column_6;
 
@@ -405,6 +449,7 @@ void _connect_button_clicked(   GtkButton       *self,
         g_signal_connect(G_OBJECT(adapters_tree), "row-activated", G_CALLBACK(_adapters_tree_selected), select_1);
         g_signal_connect(G_OBJECT(select_2), "changed", G_CALLBACK(_peripherals_tree_changed), peripherals_text);
         g_signal_connect(G_OBJECT(peripherals_tree), "row-activated", G_CALLBACK(_peripherals_tree_selected), select_2);
+        g_signal_connect(G_OBJECT(close_button), "clicked", G_CALLBACK(_close_button_clicked), data);
 
         g_object_set_data(G_OBJECT(adapters_tree), "bled", data);
         g_object_set_data(G_OBJECT(peripherals_tree), "bled", data);
@@ -416,8 +461,6 @@ void _connect_button_clicked(   GtkButton       *self,
         gtk_tree_view_append_column(GTK_TREE_VIEW(peripherals_tree), column_5);
         gtk_tree_view_append_column(GTK_TREE_VIEW(peripherals_tree), column_6);
 
-
-        g_object_set_data(G_OBJECT(adapters_store), "iter", &adapters_iter);
         g_object_set_data(G_OBJECT(adapters_store), "text", adapters_text);
         g_object_set_data(G_OBJECT(adapters_store), "tree", adapters_tree);
 
@@ -444,20 +487,18 @@ void load_bluetooth (   GtkBuilder      *builder,
         GObject *peripherals_text   = gtk_builder_get_object(builder, "peripherals_text");
         GObject *peripherals_tree   = gtk_builder_get_object(builder, "peripherals_tree");
 
-        GObject *services_text      = gtk_builder_get_object(builder, "services_text");
-        GObject *services_tree      = gtk_builder_get_object(builder, "services_tree");
-
         GObject *connect_button     = gtk_builder_get_object(builder, "bluetooth_connect_button");
         GObject *close_button       = gtk_builder_get_object(builder, "bluetooth_close_button");
 
+        GObject *status_label       = gtk_builder_get_object(builder, "label_status");
+
+        g_object_set_data(bled,"bluetooth_status", status_label);
         g_object_set_data(bled, "adapters_text", adapters_text);
         g_object_set_data(bled, "adapters_tree", adapters_tree);
         g_object_set_data(bled, "peripherals_text", peripherals_text);
         g_object_set_data(bled, "peripherals_tree", peripherals_tree);
-        g_object_set_data(bled, "services_text", services_text);
-        g_object_set_data(bled, "services_tree", services_tree);
         g_object_set_data(bled, "connect_button", connect_button);
         g_object_set_data(bled, "close_button", close_button);
-        
+
         g_signal_connect(button, "clicked", G_CALLBACK(_connect_button_clicked), bled);
 }
