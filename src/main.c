@@ -15,7 +15,11 @@ static void activate (  GtkApplication  *app,
         // Loading submodules
         load_file_browsing(builder, GTK_WINDOW(window));
         load_bluetooth(builder, GTK_WINDOW(window));
+        load_plotting(builder, GTK_WINDOW(window));
 
+        gtk_window_set_default_size(GTK_WINDOW(window), 1000, 700);
+        gtk_widget_set_size_request(GTK_WIDGET(window), 1000, 700);
+        gtk_window_set_resizable(GTK_WINDOW(window), false);
         gtk_widget_show (GTK_WIDGET (window));
 
         // Remember to free memory

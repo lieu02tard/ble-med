@@ -258,6 +258,13 @@
                   </object>
                 </child>
                 <child>
+                  <object class="GtkButton" id="button_plot">
+                    <property name="label" translatable="1">Start plotting</property>
+                    <property name="focusable">1</property>
+                    <property name="margin-end">20</property>
+                  </object>
+                </child>
+                <child>
                   <object class="GtkLabel" id="label_status">
                     <property name="hexpand">1</property>
                     <property name="margin-start">3</property>

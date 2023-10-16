@@ -1,5 +1,6 @@
 #include "ble_medical_bluetooth.h"
 #include "ble_medical_debug.h"
+#include "ble_medical_data.h"
 #include "credentials.h"
 
 #include <glib/gi18n.h>
@@ -8,6 +9,7 @@
 
 #define PERIPHERAL_LIST_MAX 10 // Default size for peripherals list
 #define DEFAULT_BLE_SERVICE_NAME "LMAO"
+#define G_OBJECT_TRANSFER_DATA(DEST, SRC, KEY) g_object_set_data(SRC, KEY, g_object_get_data(DEST, KEY))
 
 enum {
         ADDRESS_COL,
@@ -30,19 +32,6 @@ enum {
         NS_COLUMNS = 3
 };
 
-void print_formated(uint8_t *data)
-{
-        uint8_t t1 = *(data);
-        uint8_t t2 = *(data + 1);
-        uint16_t *rvalue        = (uint16_t*)(data + 2);
-        uint16_t *irvalue       = (uint16_t*)(data + 42);
-        uint32_t percentage     = *((uint32_t*)(data + 82));
-        uint64_t time           = *((uint64_t*)(data + 84));
-        uint32_t milis          = *((uint32_t*)(data + 88));
-        g_print("Temp 1: %hu\nTemp 2: %hu\nRed value: %u\nIR Value: %u\nPercentage: %u\nTime: %lu\nMilis: %u\n", 
-        t1, t2, rvalue[0], irvalue[0], percentage, time, milis);
-}
-
 typedef struct _twin_list_0 {
         size_t *peripheral_list_len;
         simpleble_peripheral_t *list;
@@ -63,6 +52,7 @@ void _close_button_clicked(GtkButton *self, gpointer data)
 {
         // Free unused peripheral identifier, clean up the dialog and close it
         GObject *bled = (GObject*) data;
+        GtkWindow* window = (GtkWindow*) g_object_get_data(bled, "window");
         simpleble_peripheral_t *plist = (simpleble_peripheral_t*) g_object_get_data(bled, "peripherals_list");
 
         
@@ -89,6 +79,8 @@ void _close_button_clicked(GtkButton *self, gpointer data)
         g_object_set_data(bled, "peripherals_list", NULL);
         g_object_set_data(bled, "main_peripheral", main_list);
 
+        g_object_set_data(window, "main_peripheral", main_list);
+        g_object_set_data(window, "adapter_index", g_object_get_data(bled, "adapter"));
         char *_identifier = simpleble_peripheral_identifier(main_list[0]);
         GObject *_label = g_object_get_data(bled, "bluetooth_status");
         char _label_text[BUFSIZ];
@@ -223,7 +215,7 @@ gint _verify_peripherals(simpleble_peripheral_t peri)
                                         size_t data_length;
                                         _debug_print("Start receiving . . . ");
                                         err_code = simpleble_peripheral_read(peri, service.uuid, service.characteristics[j].uuid, &data, &data_length);
-                                        if (data_length == 90)
+                                        if (data_length == PACKAGE_SIZE)
                                         {
                                                 _debug_print("Connection verified");
                                                 simpleble_free(data);
@@ -246,7 +238,7 @@ void _peripherals_tree_selected(GtkTreeView     *self,
                                 gpointer        data)
 {
         simpleble_err_t         err_code = SIMPLEBLE_SUCCESS;
-        GObject                 *bled = (GObject*) g_object_get_data(self, "bled");
+        GObject                 *bled = (GObject*) g_object_get_data(G_OBJECT(self), "bled");
         simpleble_peripheral_t  *peripherals = (simpleble_peripheral_t*) g_object_get_data(bled, "peripherals_list");
         size_t                  peripheral_count = GPOINTER_TO_SIZE (g_object_get_data(bled, "peripherals_count"));
         GtkTreeSelection        *select = (GtkTreeSelection*)data;
@@ -499,6 +491,6 @@ void load_bluetooth (   GtkBuilder      *builder,
         g_object_set_data(bled, "peripherals_tree", peripherals_tree);
         g_object_set_data(bled, "connect_button", connect_button);
         g_object_set_data(bled, "close_button", close_button);
-
+        g_object_set_data(bled, "window", window);
         g_signal_connect(button, "clicked", G_CALLBACK(_connect_button_clicked), bled);
 }

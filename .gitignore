@@ -2,3 +2,8 @@
 src/build
 main
 log
+src/_tmp.src
+src/credentials.h
+src/config.h
+src/gtkchart.c
+src/gtkchart.h
