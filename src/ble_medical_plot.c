@@ -231,13 +231,13 @@ void load_plotting(GtkBuilder *builder, GtkWindow *window)
         GObject *plot_box = gtk_builder_get_object(builder, "plot_box");
 
         chart = GTK_CHART(gtk_chart_new());
-        gtk_chart_set_type(chart, GTK_CHART_TYPE_LINE);
+        gtk_chart_set_type(chart, GTK_CHART_TYPE_LINEAR_AUTOSCALE);
         gtk_chart_set_title(chart, "PPG Signal");
         gtk_chart_set_label(chart, "Random label");
         gtk_chart_set_x_label(chart, "Time [s]");
         gtk_chart_set_y_label(chart, "PPG signal");
-        gtk_chart_set_x_max(chart, 10);
-        gtk_chart_set_y_max(chart, 100000);
+        gtk_chart_set_x_interval(chart, 10.0);
+        gtk_chart_set_y_upper(chart, 5000);
         gtk_chart_set_width(chart, 1000);
         gtk_widget_set_hexpand(GTK_WIDGET(chart), true);
         gtk_widget_set_vexpand(GTK_WIDGET(chart), true);
