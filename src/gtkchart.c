@@ -439,7 +439,7 @@ static void chart_draw_auto_scale(GtkChart *self,
         self->point_start = self->point_list;
     list = self->point_last;
     struct chart_point_t *point = list->data;
-    g_print("%.1f : %.1f\t", point->x, point->y);
+//    g_print("%.1f : %.1f\t", point->x, point->y);
     if (point->x > self->x_upper)
     {
         struct chart_point_t *tp = self->point_start->data;

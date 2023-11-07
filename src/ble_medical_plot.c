@@ -6,7 +6,6 @@
 #include "ble_medical_bluetooth.h"
 #include <simpleble_c/simpleble.h>
 
-//#define __DEBUG__
 static GMutex producer_mutex;
 static GtkChart *chart = NULL;
 static ble_time_t _starting_time;
@@ -35,12 +34,13 @@ void data_writing(gpointer data)
         for (size_t j = 0; j < 10; j++) {
                 uint16_t* rvalue = ble_pack_get_rvalue(t_pack_0->data);
                 uint16_t* irvalue = ble_pack_get_irvalue(t_pack_0->data);
-                g_output_stream_printf(G_OUTPUT_STREAM(fstream), &bytes_written, NULL, NULL, "T1: %hhu\nT2: %hhu\nRed value: %hu %hu %hu %hu %hu %hu %hu %hu %hu %hu\nIR Value: %hu %hu %hu %hu %hu %hu %hu %hu %hu %hu\nBeat average: %d\n\n", 
+                g_output_stream_printf(G_OUTPUT_STREAM(fstream), &bytes_written, NULL, NULL, "T1: %hhu\nT2: %hhu\nRed value: %hu %hu %hu %hu %hu %hu %hu %hu %hu %hu\nIR Value: %hu %hu %hu %hu %hu %hu %hu %hu %hu %hu\nBeat average: %d\nTime: %ld\n\n", 
                 ble_pack_get_t1(t_pack_0->data),
                 ble_pack_get_t2(t_pack_0->data),
                 rvalue[0], rvalue[1], rvalue[2], rvalue[3], rvalue[4], rvalue[5], rvalue[6], rvalue[7], rvalue[8], rvalue[9],
                 irvalue[0], irvalue[1], irvalue[2], irvalue[3], irvalue[4], irvalue[5], irvalue[6], irvalue[7], irvalue[8], irvalue[9],
-                ble_pack_get_beat(t_pack_0->data)
+                ble_pack_get_beat(t_pack_0->data),
+                t_pack_0->time
                 );
         }
 #endif
@@ -63,8 +63,10 @@ void gui_chart_plot_thread(gpointer data)
 //        g_mutex_lock(&producer_mutex);
         pack_to_point(points, _starting_time, t_pack_0);
         for (size_t j = 0; j < 10; j++)
+        {
                 gtk_chart_plot_point(chart, points[j].x, points[j].y);
-
+                g_print("%.2f  ::  %.2f\n", points[j].x, points[j].y);
+        }
         if (points[0].x > 10) {
                 // [TODO]: Clear the existing chart
         }
@@ -150,13 +152,20 @@ gpointer _producer_function(gpointer data)
         GFile* file = g_file_new_for_path(DEFAULT_PATH);
          fstream = g_file_append_to(file, G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL);
         size_t j = 0;
+        ble_time_t time_0 = 0;
         while (true) {
                 err_code = simpleble_peripheral_read(main_peripheral[0], 
                 service.uuid, 
                 service.characteristics[characteristic_index].uuid, 
                 &pack, 
                 &pack_len);
-                ble_time_t time_0 = g_get_monotonic_time();
+                if (pack_len == 0)
+                {
+                        g_usleep((1000000/120)/10);
+                        _debug_print("Sleep");
+                        continue;
+                }
+                time_0 += 83300;
                 if (err_code != SIMPLEBLE_SUCCESS)
                         exit(12);
                 if (hasFirstTime == false) {
@@ -174,7 +183,6 @@ gpointer _producer_function(gpointer data)
                         g_thread_pool_push(thread_plot, t_pack_1, NULL);
                 if (isWriting == true)
                         g_thread_pool_push(thread_write, t_pack_1, NULL);
-                usleep(PACKAGE_INTERVAL);
 //                simpleble_free(pack);
                 j++;
         }
